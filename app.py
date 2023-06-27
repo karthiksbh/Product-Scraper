@@ -96,7 +96,46 @@ def scrape_snapdeal(search_query):
 
     return results
 
+def scrape_flipkart(search_query):
+    lst=search_query.split()
+    linkStr=""
+    
+    if(search_query == lst[0]):
+        linkStr="https://www.flipkart.com/search?q="+keywd+"&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off"
 
+    else:
+        queryStr=""
+        for i in lst:
+            queryStr+=i+"%20"
+        linkStr="https://www.flipkart.com/search?q="+queryStr+"&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off"
+    
+    url=requests.get(linkStr)
+    soup=bs(url.text)
+    
+    elements=soup.find_all("div", class_="_13oc-S")
+    
+    results = []
+    for e in elements:
+        
+        elePrefix = e.find("div", class_="_2kHMtA").find('a')
+        #URL
+        url = "https://www.flipkart.com" + elePrefix.get('href')
+        
+        elePrefix = e.find("div", class_="_2kHMtA").find('a').find("div", class_ = "_2QcLo-").find('img')
+        
+        #Title
+        title = elePrefix.get('alt')
+        
+        #Image URL
+        image_url = elePrefix.get('src')
+        
+        #Price
+        price = e.find("div", class_="col col-5-12 nlI3QM").find("div", class_="_30jeq3 _1_WHN1").text
+        
+        results.append({"platform": "Flipkart", "title": title, "price": price, "url": url, "image_url": image_url})
+        
+    return results
+    
 @app.route('/search', methods=['GET'])
 def search():
     search_query = request.args.get('query')
