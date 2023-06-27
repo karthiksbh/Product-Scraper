@@ -1,0 +1,41 @@
+# Byte-compiled / optimized files
+*.pyc
+__pycache__/
+
+# Environment variables
+.env
+
+# Web server files
+*.pid
+*.pyc
+*.pyo
+*.pyd
+*.bak
+*.swp
+*.tmp
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+
+# Static files
+/static/
+
+# User-uploaded files
+/uploads/
+
+# Environment-specific files
+/venv/
+/.venv/
+/.env/
+
+# Dependency directories
+/lib/
+/lib64/
+/include/
+/bin/
+/build/
+/docs/_build/
