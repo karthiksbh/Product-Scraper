@@ -3,8 +3,10 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import random
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def scrape_amazon(search_query):
     search_query = urllib.parse.quote(search_query)
@@ -52,7 +54,7 @@ def scrape_amazon(search_query):
 
 def scrape_snapdeal(search_query):
     search_query = urllib.parse.quote(search_query)
-    url = f"https://www.snapdeal.com/search?keyword={search_query}"
+    url = f"https://www.snapdeal.com/search?keyword={search_query}" + "&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
@@ -97,40 +99,28 @@ def scrape_snapdeal(search_query):
     return results
 
 def scrape_flipkart(search_query):
-    lst=search_query.split()
-    linkStr=""
+    search_query = urllib.parse.quote(search_query)
+    linkStr=f"https://www.flipkart.com/search?q={search_query}"
 
-    if(search_query == lst[0]):
-        linkStr="https://www.flipkart.com/search?q="+search_query+"&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
 
-    else:
-        queryStr=""
-        for i in lst:
-            queryStr+=i+"%20"
-        linkStr="https://www.flipkart.com/search?q="+queryStr+"&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off"
+    response = requests.get(linkStr, headers=headers)
+    response.raise_for_status()
 
-    url=requests.get(linkStr)
-    soup=bs(url.text)
-
+    soup = BeautifulSoup(response.text, "html.parser")
     elements=soup.find_all("div", class_="_13oc-S")
 
     results = []
     for e in elements:
-
         elePrefix = e.find("div", class_="_2kHMtA").find('a')
         #URL
         url = "https://www.flipkart.com" + elePrefix.get('href')
-        
-        #Title
-#         titleLst = elePrefix.get('href').split('/')[1]
-#         title = ""
-#         for s in titleLst.split('-'):
-#             title = title + s +" "
 
         elePrefix = e.find("div", class_="_2kHMtA").find('a').find("div", class_ = "_2QcLo-").find('img')
 
-        
-        #Image URL
         image_url = elePrefix.get('src')
         
         #Title
@@ -140,7 +130,7 @@ def scrape_flipkart(search_query):
         price = e.find("div", class_="col col-5-12 nlI3QM").find("div", class_="_30jeq3 _1_WHN1").text
 
         results.append({"platform": "Flipkart", "title": title, "price": price, "url": url, "image_url": image_url})
-
+        
     return results
     
 @app.route('/search', methods=['GET'])
@@ -152,8 +142,9 @@ def search():
 
     amazon_results = scrape_amazon(search_query)
     snapdeal_results = scrape_snapdeal(search_query)
-
-    all_results = amazon_results + snapdeal_results
+    flipkart_result = scrape_flipkart(search_query)
+    
+    all_results = amazon_results + snapdeal_results + flipkart_result
     random.shuffle(all_results)
 
     return jsonify(all_results)
