@@ -20,35 +20,48 @@ def scrape_amazon(search_query):
     listings = soup.find_all("div", {"data-component-type": "s-search-result"})
     results = []
 
-    for listing in listings[:2]:
-        title_element = listing.find("span", {"class": "a-size-medium"})
-        if title_element:
-            title = title_element.text.strip()
-        else:
-            continue
+    for listing in listings:
+        if listing:
+            title_element = listing.find("span", {"class": "a-size-medium"})
+            if title_element:
+                title = title_element.text.strip()
+            else:
+                continue
 
-        price_element = listing.find("span", {"class": "a-price-whole"})
-        if price_element:
-            price = price_element.text.strip()
-        else:
-            continue
+            price_element = listing.find("span", {"class": "a-price-whole"})
+            if price_element:
+                price = price_element.text.strip()
+            else:
+                continue
 
-        url_element = listing.find("a", {"class": "a-link-normal"})
-        if url_element:
-            url = "https://www.amazon.in" + url_element["href"]
-        else:
-            continue
+            url_element = listing.find("a", {"class": "a-link-normal"})
+            if url_element:
+                url = "https://www.amazon.in" + url_element["href"]
+            else:
+                continue
 
-        image_element = listing.find("img", {"class": "s-image"})
-        if image_element:
-            image_url = image_element["src"]
-        else:
-            continue
+            rating_element = listing.find("div", {"class": "a-row a-size-small"})
+            if rating_element:
+                rating = rating_element.find('span', class_ = "a-icon-alt").text
+            else:
+                continue
+    #             rating = "Cannot Fetch"
 
-        results.append({"platform": "Amazon", "title": title, "price": price, "url": url, "image_url": image_url})
+            review_element = listing.find("span", {"class": "a-size-base s-underline-text"})
+            if review_element:
+                review = '('+review_element.text+')';
+            else:
+                continue
 
+
+    #         image_element = listing.find("img", {"class": "s-image"})
+    #         if image_element:
+    #             image_url = image_element["src"]
+    #         else:
+    #             continue
+
+            results.append({"platform": "Amazon", "title": title, "price": price, "rating": rating, "review": review, "url": url}) 
     return results
-
 
 def scrape_snapdeal(search_query):
     search_query = urllib.parse.quote(search_query)
@@ -67,81 +80,99 @@ def scrape_snapdeal(search_query):
 
     results = []
 
-    for listing in listings[:2]:
-        title_element = listing.find("p", {"class": "product-title"})
-        if title_element:
-            title = title_element.text.strip()
-        else:
-            continue
+    for listing in listings:      
+        if listing:
+            title_element = listing.find("p", {"class": "product-title"})
+            if title_element:
+                title = title_element.text.strip()
+            else:
+                continue
 
-        price_element = listing.find("span", {"class": "lfloat product-price"})
-        if price_element:
-            price = price_element.text.strip()
-        else:
-            continue
+            price_element = listing.find("span", {"class": "lfloat product-price"})
+            if price_element:
+                price = price_element.text.strip()
+            else:
+                continue
 
-        url_element = listing.find("a", {"class": "dp-widget-link noUdLine"})
-        if url_element:
-            url = url_element["href"]
-        else:
-            continue
+            url_element = listing.find("a", {"class": "dp-widget-link noUdLine"})
+            if url_element:
+                url = url_element["href"]
+            else:
+                continue
 
-        image_element = listing.find("img", {"class": "product-image"})
-        if image_element:
-            image_url = image_element["src"]
-        else:
-            continue
+            image_element = listing.find("img", {"class": "product-image"})
+            if image_element:
+                print(image_element)
+                image_url = image_element.get('src')
+            else:
+                continue
 
-        results.append({"platform":"Snapdeal","title": title, "price": price, "url": url, "image_url": image_url})
+            rating_element = listing.find("div", {"class" : "filled-stars"})
+            if rating_element:
+                ratingLst = rating_element.get('style').split(":");
+                rating = float(ratingLst[1][0:-1])
+            else:
+                continue
 
+            review_element = listing.find("p", {"class" : "product-rating-count"})
+            if review_element:
+                review = review_element.text
+    #             print(review)
+            else:
+                continue
+            
+        
+        results.append({"platform":"Snapdeal","title": title, "price": price, "rating": rating, "review": review, "url": url})#, "image_url": image_url})
     return results
 
 def scrape_flipkart(search_query):
-    lst=search_query.split()
-    linkStr=""
+    search_query = urllib.parse.quote(search_query)
+    linkStr="https://www.flipkart.com/search?q="+search_query
 
-    if(search_query == lst[0]):
-        linkStr="https://www.flipkart.com/search?q="+search_query+"&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
 
-    else:
-        queryStr=""
-        for i in lst:
-            queryStr+=i+"%20"
-        linkStr="https://www.flipkart.com/search?q="+queryStr+"&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off"
+    response = requests.get(linkStr, headers=headers)
+    response.raise_for_status()
 
-    url=requests.get(linkStr)
-    soup=bs(url.text)
-
+    soup = BeautifulSoup(response.text, "html.parser")
     elements=soup.find_all("div", class_="_13oc-S")
 
-    results = []
+    result = []
+    
     for e in elements:
-
         elePrefix = e.find("div", class_="_2kHMtA").find('a')
-        #URL
+        
         url = "https://www.flipkart.com" + elePrefix.get('href')
-        
-        #Title
-#         titleLst = elePrefix.get('href').split('/')[1]
-#         title = ""
-#         for s in titleLst.split('-'):
-#             title = title + s +" "
 
-        elePrefix = e.find("div", class_="_2kHMtA").find('a').find("div", class_ = "_2QcLo-").find('img')
+#         image_url = elePrefix.find("div", class_ = "_2QcLo-").find('img').get('src')
+        
+        
+        title=e.find("div", class_="col col-7-12").find("div", class_="_4rR01T").text
 
+        reviews = e.find("span", class_="_2_R_DZ")#.find("div", class_= "_3LWZlK")
+        if reviews:
+            reviews = reviews.get_text(strip = True)
+
+    
+        rating = e.find("div", class_="_2kHMtA").find('a').find("div", class_ = "col col-7-12").find("div", class_="_3LWZlK")
         
-        #Image URL
-        image_url = elePrefix.get('src')
-        
-        #Title
-        title = elePrefix.get('alt')
+        if rating:
+            rating = rating.text
+            reviewLst = reviews.split('&')
+            rating += " ("+reviewLst[0]+")"
+            reviews = reviewLst[0]+" & "+reviewLst[1]
+            
+#         print("Title: ", title,"Rating: ", rating)
 
         #Price
         price = e.find("div", class_="col col-5-12 nlI3QM").find("div", class_="_30jeq3 _1_WHN1").text
 
-        results.append({"platform": "Flipkart", "title": title, "price": price, "url": url, "image_url": image_url})
-
-    return results
+        result.append({"platform": "Flipkart", "title": title, "price": price, "rating": rating, "review": reviews, "url": url})
+        
+    return result
     
 @app.route('/search', methods=['GET'])
 def search():
