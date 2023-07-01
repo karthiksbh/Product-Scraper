@@ -20,7 +20,7 @@ def scrape_amazon(search_query):
     listings = soup.find_all("div", {"data-component-type": "s-search-result"})
     results = []
 
-    for listing in listings:
+    for listing in listings[:3]:
         if listing:
             title_element = listing.find("span", {"class": "a-size-medium"})
             if title_element:
@@ -80,7 +80,7 @@ def scrape_snapdeal(search_query):
 
     results = []
 
-    for listing in listings:      
+    for listing in listings[:3]:      
         if listing:
             title_element = listing.find("p", {"class": "product-title"})
             if title_element:
@@ -127,7 +127,7 @@ def scrape_snapdeal(search_query):
 
 def scrape_flipkart(search_query):
     search_query = urllib.parse.quote(search_query)
-    linkStr="https://www.flipkart.com/search?q="+search_query
+    linkStr = f"https://www.flipkart.com/search?q={search_query}"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
@@ -142,7 +142,7 @@ def scrape_flipkart(search_query):
 
     result = []
     
-    for e in elements:
+    for e in elements[:3]:
         elePrefix = e.find("div", class_="_2kHMtA").find('a')
         
         url = "https://www.flipkart.com" + elePrefix.get('href')
@@ -183,11 +183,12 @@ def search():
 
     amazon_results = scrape_amazon(search_query)
     snapdeal_results = scrape_snapdeal(search_query)
+    flipkart_results = scrape_flipkart(search_query)
 
-    all_results = amazon_results + snapdeal_results
+    all_results = amazon_results + snapdeal_results+flipkart_results
     random.shuffle(all_results)
 
     return jsonify(all_results)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
