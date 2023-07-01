@@ -27,10 +27,12 @@ document.getElementById('form').addEventListener('submit', function (e) {
     results.forEach(function (transaction) {
       const listItem = document.createElement('li');
       listItem.innerHTML = `
-        <h3>${transaction.title}</h3>
-        <p>${transaction.platform}</p>
-        <p>${transaction.price}</p>
-        <a href="${transaction.url}" target="_blank" rel="noopener noreferrer">View Details</a>
+        <h4>${transaction.title}</h4>
+        <p>Platform: ${transaction.platform}</p>
+        <p>Price: ${transaction.price}</p>
+        <p>Ratings(Stars or %): ${transaction.rating}</p>
+        <p>Reviews: ${transaction.review}</p>
+        <br><a href="${transaction.url}" target="_blank" rel="noopener noreferrer">View Product</a>
       `;
   
       list.appendChild(listItem);
