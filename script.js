@@ -5,7 +5,7 @@ document.getElementById('form').addEventListener('submit', function (e) {
     const list = document.getElementById('list');
     list.innerHTML = '<li>Loading...</li>'; // Display loading message
     
-    fetch(`http://localhost:5000/search?query=${query}`)
+    fetch(`https://product-scraper-fra4.onrender.com/search?query=${query}`)
       .then(function (response) {
         return response.json();
       })
