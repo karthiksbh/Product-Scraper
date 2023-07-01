@@ -14,7 +14,7 @@ document.getElementById('form').addEventListener('submit', function (e) {
       })
       .catch(function (error) {
         console.error(error);
-        list.innerHTML = '<li>Error occurred while fetching data</li>'; // Display error message
+        list.innerHTML = '<li>Encountered an Error while trying to fetch the data. Please try again..</li>'; // Display error message
       });
   
     searchInput.value = '';
